@@ -16,7 +16,7 @@ You will need node.js and npm to run the project
 
 ## Simple build for production
 
-    $ npm build
+    $ npm run build
 
 ## How does it work?
 
