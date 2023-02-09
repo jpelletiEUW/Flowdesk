@@ -7,10 +7,6 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const config = {
-  environment: "live",
-};
-
 app.get(
   "/cumulative-delta/:pairSymbol",
   async (req: express.Request, res: express.Response) => {
