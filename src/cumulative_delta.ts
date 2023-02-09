@@ -33,7 +33,6 @@ export async function calculateTradesDelta(
     const result: ApiTradesHistoryResult = await api.getTradeHistories(
       pairSymbol
     );
-
     if (result.data.length === 0) {
       throw new PairNotFoundError(
         `${pairSymbol} trading pair doesn't exist on Kucoin. Try reversing the two coins, if it still doesn't work, then this pair isn't listed on Kucoin.`

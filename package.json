@@ -13,10 +13,14 @@
     "@types/express": "^4.17.17",
     "@types/node": "^18.13.0",
     "jest": "^29.4.2",
+    "nodemon": "^2.0.20",
     "prettier": "^2.8.4",
     "ts-jest": "^29.0.5"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc",
+    "start": "npx nodemon src/app.ts",
+    "clean": "rm -rf build"
   }
 }
