@@ -1,53 +1,67 @@
-const api = require("kucoin-node-api");
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
+import * as express from "express";
+import * as api from "kucoin-node-api";
+import * as bodyParser from "body-parser";
+import * as cors from "cors";
 
 const config = {
   environment: "live",
 };
 
+api.init(config);
+
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-api.init(config);
+type Trade = {
+  sequence: string;
+  price: string;
+  size: string;
+  side: "buy" | "sell";
+  time: Date;
+};
 
 type ApiTradesHistoryResult = {
   code: number;
-  data: Record<string, string>[];
+  data: Trade[];
 };
 
 class PairNotFoundError extends Error {}
 
-app.get("/cumulative-delta/:pairSymbol", (req, res) => {
-  const pairSymbol = req.params.pairSymbol;
-  api
-    .getTradeHistories(pairSymbol)
-    .then((result: ApiTradesHistoryResult) => {
-      if (result.data.length === 0) {
-        throw new PairNotFoundError("This pair doesn't exist on kucoin");
-      }
-      let delta = 0;
-      result.data.forEach((trade) => {
-        console.log(trade.size);
-        if (trade.side === "buy") {
-          delta += parseFloat(trade.size);
-        } else {
-          delta -= parseFloat(trade.size);
+app.get(
+  "/cumulative-delta/:pairSymbol",
+  (req: express.Request, res: express.Response) => {
+    const pairSymbol = req.params.pairSymbol;
+    api
+      .getTradeHistories(pairSymbol)
+      .then((result: ApiTradesHistoryResult) => {
+        if (result.data.length === 0) {
+          throw new PairNotFoundError(
+            `${pairSymbol} trading pair doesn't exist on Kucoin. Try reversing the two coins, if it still doesn't work, then this pair isn't listed on Kucoin.`
+          );
         }
+        let delta = 0;
+        result.data.forEach((trade: Trade) => {
+          switch (trade.side) {
+            case "buy":
+              delta += parseFloat(trade.size);
+              break;
+            case "sell":
+              delta -= parseFloat(trade.size);
+              break;
+          }
+        });
+        res.status(200).send(delta.toString());
+      })
+      .catch((error: Error) => {
+        console.error(error);
+        if (error instanceof PairNotFoundError) {
+          return res.status(404).send(error.message);
+        }
+        return res.status(500).send(error.message);
       });
-      console.log(delta);
-      res.status(200).send(delta.toString());
-    })
-    .catch((error: Error) => {
-      console.error(error);
-      if (error instanceof PairNotFoundError) {
-        return res.status(404).send(error);
-      }
-      return res.status(500).send(error);
-    });
-});
+  }
+);
 
 app.listen(3001, () => {
   console.log("listening on port 3001");
